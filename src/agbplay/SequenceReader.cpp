@@ -102,8 +102,9 @@ bool SequenceReader::PlayerMain(MP2KPlayer &player)
     // compensate for that. This will also compensate for buffer sizes, which do not divide
     // evenly by the framerate (e.g. 44100 / (4 * 60) == 183.75).
 
+    /* frog-switch: tempoFactor is the game-driven half (HW tempoU / 256). */
     player.tickProgress_32_32 += static_cast<uint64_t>(
-        player.bpm * speedFactor * ctx.mixer.GetBufferLengthSpeedCorrection() * UNIT_FP_32_32
+        player.bpm * player.tempoFactor * speedFactor * ctx.mixer.GetBufferLengthSpeedCorrection() * UNIT_FP_32_32
     );
 
     while (player.tickProgress_32_32 >= UNIT_STEP_32_32) {

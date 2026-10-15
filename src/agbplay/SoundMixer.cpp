@@ -138,9 +138,11 @@ void SoundMixer::Process()
                 continue;
 
             assert(ctx.masterAudioBuffer.size() == trk.audioBuffer.size());
+            /* frog-switch: game-driven per-track gain (bridge mirror). */
+            const float extVol = trk.extVolume;
             for (size_t i = 0; i < ctx.masterAudioBuffer.size(); i++) {
-                ctx.masterAudioBuffer[i].left += trk.audioBuffer[i].left;
-                ctx.masterAudioBuffer[i].right += trk.audioBuffer[i].right;
+                ctx.masterAudioBuffer[i].left += trk.audioBuffer[i].left * extVol;
+                ctx.masterAudioBuffer[i].right += trk.audioBuffer[i].right * extVol;
             }
         }
     }

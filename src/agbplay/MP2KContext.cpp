@@ -119,7 +119,10 @@ void MP2KContext::m4aSongNumStartOrChange(uint16_t songId)
     auto &player = players.at(playerIdx);
     primaryPlayer = playerIdx;
 
-    if (songPos != player.bankPos || player.finished || !player.playing) {
+    /* frog-switch: compare song headers like HW (m4a StartOrChange checks the
+       header pointer); bankPos is the tone bank and never equals songPos, which
+       made every change call restart. Matches StartOrContinue below. */
+    if (songPos != player.songHeaderPos || player.finished || !player.playing) {
         m4aMPlayStart(playerIdx, songPos);
     }
 }
@@ -192,6 +195,92 @@ void MP2KContext::m4aMPlayAllStop()
 void MP2KContext::m4aMPlayContinue(uint8_t playerIdx)
 {
     players.at(playerIdx).playing = true;
+    /* frog-switch: all-stopped is a transient (pause between songs), not song
+       end — HW has no master fade. m4aMPlayStart already resets it; without
+       this, a continue after every player stopped stays faded out forever. */
+    mixer.ResetFade();
+}
+
+void MP2KContext::m4aMPlaySetTrackVolume(uint8_t playerIdx, uint8_t trackIdx, float volume)
+{
+    if (playerIdx >= players.size())
+        return;
+    MP2KPlayer &player = players.at(playerIdx);
+    if (trackIdx >= player.tracks.size())
+        return;
+    float v = volume;
+    if (v < 0.0f)
+        v = 0.0f;
+    else if (v > 1.0f)
+        v = 1.0f;
+    player.tracks.at(trackIdx).extVolume = v;
+}
+
+void MP2KContext::m4aMPlaySetTempo(uint8_t playerIdx, uint16_t tempo)
+{
+    if (playerIdx >= players.size())
+        return;
+    /* HW: tempoI = tempoD * tempoU >> 8 with tempoU = 0x100 for normal
+       speed; the song half (tempoD) already lives in player.bpm, so this
+       is the game half as a factor. Tempo 0 freezes the song like HW
+       (tempoI stays 0). */
+    players.at(playerIdx).tempoFactor = static_cast<float>(tempo) / 256.0f;
+}
+
+void MP2KContext::m4aMPlaySetTrackPitch(uint8_t playerIdx, uint8_t trackIdx, int16_t pitch)
+{
+    if (playerIdx >= players.size())
+        return;
+    MP2KPlayer &player = players.at(playerIdx);
+    if (trackIdx >= player.tracks.size())
+        return;
+    MP2KTrack &trk = player.tracks.at(trackIdx);
+    /* HW game pitch reconstructs the s16 exactly (keyShiftX << 8 + pitX);
+       engine units are 1/64 semitone against HW's 1/256, hence pitch/4
+       (sub-cent truncation). Retune live notes like the HW PITCHG flag. */
+    trk.extPitch = static_cast<int16_t>(pitch / 4);
+    trk.updatePitch = true;
+}
+
+void MP2KContext::m4aMPlaySetTrackModDepth(uint8_t playerIdx, uint8_t trackIdx, uint8_t depth)
+{
+    if (playerIdx >= players.size())
+        return;
+    MP2KPlayer &player = players.at(playerIdx);
+    if (trackIdx >= player.tracks.size())
+        return;
+    /* Absolute write like HW (track->mod); song MOD commands overwrite
+       later until the game sets again (last-writer-wins both sides). */
+    player.tracks.at(trackIdx).mod = depth;
+    if (depth == 0)
+        player.tracks.at(trackIdx).ResetLfoValue();
+}
+
+void MP2KContext::m4aMPlaySetTrackLfoSpeed(uint8_t playerIdx, uint8_t trackIdx, uint8_t speed)
+{
+    if (playerIdx >= players.size())
+        return;
+    MP2KPlayer &player = players.at(playerIdx);
+    if (trackIdx >= player.tracks.size())
+        return;
+    /* Absolute write like HW (track->lfoSpeed, cleared LFO on 0). */
+    player.tracks.at(trackIdx).lfos = speed;
+    if (speed == 0)
+        player.tracks.at(trackIdx).ResetLfoValue();
+}
+
+uint16_t MP2KContext::m4aMPlayGetTrackActivity(uint8_t playerIdx) const
+{
+    if (playerIdx >= players.size())
+        return 0;
+    const MP2KPlayer &player = players.at(playerIdx);
+    uint16_t bits = 0;
+    uint16_t bit = 1;
+    for (size_t i = 0; i < player.tracks.size() && i < 16; i++, bit <<= 1) {
+        if (player.tracks.at(i).enabled)
+            bits |= bit;
+    }
+    return bits;
 }
 
 void MP2KContext::m4aSoundClear()

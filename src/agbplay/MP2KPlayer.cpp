@@ -44,6 +44,8 @@ void MP2KPlayer::Init(const Rom &rom, size_t songHeaderPos)
     // reset runtime variables
     tickProgress_32_32 = 0;
     bpm = 150;
+    /* frog-switch: HW MPlayStart resets tempoU to 0x100 (normal speed). */
+    tempoFactor = 1.0f;
     tickCount = 0;
     frameCount = 0;
     interframeCount = 0;

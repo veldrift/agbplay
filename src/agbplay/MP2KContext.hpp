@@ -47,6 +47,13 @@ struct MP2KContext
     void m4aMPlayAllStop();
     void m4aMPlayContinue(uint8_t playerIdx);
     void m4aMPlayAllContinue();
+    void m4aMPlaySetTrackVolume(uint8_t playerIdx, uint8_t trackIdx, float volume);
+    /* frog-switch: game-driven morph controls + status-mirror query. */
+    void m4aMPlaySetTempo(uint8_t playerIdx, uint16_t tempo);
+    void m4aMPlaySetTrackPitch(uint8_t playerIdx, uint8_t trackIdx, int16_t pitch);
+    void m4aMPlaySetTrackModDepth(uint8_t playerIdx, uint8_t trackIdx, uint8_t depth);
+    void m4aMPlaySetTrackLfoSpeed(uint8_t playerIdx, uint8_t trackIdx, uint8_t speed);
+    uint16_t m4aMPlayGetTrackActivity(uint8_t playerIdx) const;
 
     /* custom helper functions */
     void m4aSoundClear();

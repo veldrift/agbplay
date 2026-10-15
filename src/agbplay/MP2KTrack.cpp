@@ -42,6 +42,7 @@ void MP2KTrack::Init(size_t pos)
     keyShift = 0;
     muted = false;
     enabled = pos != 0;
+    extVolume = 1.0f;
     updateVolume = false;
     updatePitch = false;
     channels = nullptr;
@@ -62,7 +63,8 @@ void MP2KTrack::Stop()
 
 int16_t MP2KTrack::GetPitch()
 {
-    int p = tune + bend * bendr + keyShift * 64;
+    /* frog-switch: extPitch is the game-driven half (see header). */
+    int p = tune + bend * bendr + keyShift * 64 + extPitch;
     if (modt == MODT::PITCH)
         p += lfoValue * 4;
     return static_cast<int16_t>(p);

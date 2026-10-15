@@ -24,6 +24,11 @@ struct MP2KPlayer
     /* playback state */
     bool playing = false;
     bool finished = true;
+    /* frog-switch: game-driven tempo factor (m4aMPlayTempoControl mirror).
+       HW multiplies song tempo (tempoD) by game tempo (tempoU / 256); the
+       song half already lives in bpm, this is the game half. MPlayStart
+       resets tempoU to 0x100, hence the Init reset. */
+    float tempoFactor = 1.0f;
 
     /* player timing state */
     size_t interframeCount = 0;
