@@ -170,6 +170,7 @@ void MP2KContext::m4aMPlayStart(uint8_t playerIdx, size_t songPos)
         trk.Stop();
 
     player.Init(rom, songPos);
+    player.startCount++;
     reader.Restart();
     mixer.ResetFade();
 

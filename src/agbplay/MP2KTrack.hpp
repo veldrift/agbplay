@@ -78,8 +78,9 @@ struct MP2KTrack
        HW keeps song pitch (keyShift) and game pitch (keyShiftX << 8 + pitX,
        which reconstructs the s16 exactly since pitX holds the low byte) in
        separate fields and sums them; this is the game half. Engine units
-       are 1/64 semitone against HW's 1/256, hence pitch/4. Sticky across
-       Init like HW (TrackStop/MPlayStart preserve the X fields). */
+       are 1/64 semitone against HW's 1/256, hence pitch/4. Kept across
+       Init: HW clears the X fields on the song's first tick (MPlayMain
+       START, Clear64byte), and the bridge mirrors that timing. */
     int16_t extPitch = 0;
 
     const uint8_t trackIdx;

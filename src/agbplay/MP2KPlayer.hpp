@@ -29,6 +29,9 @@ struct MP2KPlayer
        song half already lives in bpm, this is the game half. MPlayStart
        resets tempoU to 0x100, hence the Init reset. */
     float tempoFactor = 1.0f;
+    /* frog-switch: bumped by every accepted m4aMPlayStart (priority can
+       refuse one), so the bridge knows when HW would clear its tracks. */
+    uint32_t startCount = 0;
 
     /* player timing state */
     size_t interframeCount = 0;
